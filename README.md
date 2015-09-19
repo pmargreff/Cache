@@ -2,7 +2,7 @@
 
 ## Apresentação
 
-Universidade Federal de Pelotas 
+Universidade Federal de Pelotas Bacharelado em Ciência da Computação
 
 Disciplina de Arquitetura e Organizaçao de Computadores II
 
