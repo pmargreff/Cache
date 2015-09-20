@@ -1,3 +1,5 @@
+package Cache;
+
 public class Cel {
 	private boolean _validate;
 	private int _tag;
