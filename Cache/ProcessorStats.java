@@ -6,11 +6,11 @@ package Cache;
  *
  * @author pmargreff
  */
-public class MissHit {
+public class ProcessorStats {
     private int _miss;
     private int _hit;
 
-    public MissHit() {
+    public ProcessorStats() {
         this._hit = 0;
         this._miss = 0;
     }

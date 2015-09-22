@@ -17,18 +17,16 @@ public class Processor {
     private ArrayList<Integer> _address; //Memory Adress
     private ArrayList<Integer> _readOrWrite; //Define the action: 0 read memory, 1 writte on memory
     private String _path; //Path to memory file
-    private Cache _cacheMemory;
-
-    /**
-     *
-     * @param path Path that the read file will be
-     */
+    private Cache _cacheMemory; 
+    private ProcessorStats _requestedInformation; //miss or hits number    
+    
     public Processor(String path, boolean textType) {
         this._path = path; //get the path 
         _address = new ArrayList<>(); //Init the Adress List
         _readOrWrite = new ArrayList<>(); //Init the comand list (Read or Write)
-        _cacheMemory = new Cache(8); //Init cache with 8 adress size
-
+        _cacheMemory = new Cache(2,4); //Init cache with 8 adress size
+        _requestedInformation = new ProcessorStats();
+        
         //If textType = 1 try open .txt file format, else try open binary file
         if (textType) {
             this.ReadBinaryFile();
@@ -40,7 +38,7 @@ public class Processor {
     public static void main(String[] args) {
 
         Processor sample = new Processor("/home/pmargreff/Dropbox/faculdade/AOC_II/Cache/IO/arqTexto1_rw_10.txt", false);
-
+        
     }
 
     private void ReadTextFile() {
@@ -113,6 +111,18 @@ public class Processor {
                     + _path + "'");
             // Or we could just do this: 
             // ex.printStackTrace();
+        }
+    }
+    
+    public ProcessorStats MissHitAverage(){
+        for (Integer address : _address) {
+            
+            if(TestHere){
+                
+                
+            } else {
+                
+            }
         }
     }
 }
