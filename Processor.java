@@ -21,15 +21,15 @@ public class Processor {
     private int _colunms; //width size
     private int _lines;
     
-    public Processor(String path, boolean textType) {
+    public Processor(int lines, String path) {
         this._path = path; //get the path 
         this._address = new ArrayList<>(); //Init the Adress List
         this._readOrWrite = new ArrayList<>(); //Init the comand list (Read or Write)
-        this._lines = 1024;
+        this._lines = lines;
         this._colunms = 4;
         this._cacheMemory = new Cache(_lines,_colunms); //Init cache with 8 adress size
         this._requestedInformation = new ProcessorStats();
-        
+        boolean textType = true;
         //If textType = 1 try open .txt file format, else try open binary file
         if (!textType) {
             this.ReadBinaryFile();
@@ -39,9 +39,19 @@ public class Processor {
     }
 
     public static void main(String[] argv) {
+        int lines;
+        String path;
         
-        Processor sample = new Processor("/home/pmargreff/Dropbox/faculdade/AOC_II/Cache/IO/arqTexto1_rw_10k.txt", true);
-        sample.MissHitAverage();
+        if ( argv.length == 2){
+            lines = Integer.parseInt(argv[0]);
+            path = argv[1];
+            Processor sample = new Processor(lines, path);
+            sample.MissHitAverage();
+        } else {
+            System.out.println("ERROR! Argumento: Número_de_blocos<int> caminho_arquivo_entrada<String>");
+        }
+//        Processor sample = new Processor("/home/pmargreff/Dropbox/faculdade/AOC_II/Cache/IO/arqTexto1_rw_10k.txt", true);
+//        
     }
 
     private void ReadTextFile() {
