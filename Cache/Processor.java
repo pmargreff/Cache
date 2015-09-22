@@ -13,32 +13,35 @@ import java.lang.Integer;
  * @author pmargreff
  */
 public class Processor {
-
     private ArrayList<Integer> _address; //Memory Adress
     private ArrayList<Integer> _readOrWrite; //Define the action: 0 read memory, 1 writte on memory
     private String _path; //Path to memory file
     private Cache _cacheMemory; 
-    private ProcessorStats _requestedInformation; //miss or hits number    
+    public ProcessorStats _requestedInformation; //miss or hits number    
+    private int _colunms; //width size
+    private int _lines;
     
     public Processor(String path, boolean textType) {
         this._path = path; //get the path 
-        _address = new ArrayList<>(); //Init the Adress List
-        _readOrWrite = new ArrayList<>(); //Init the comand list (Read or Write)
-        _cacheMemory = new Cache(2,4); //Init cache with 8 adress size
-        _requestedInformation = new ProcessorStats();
+        this._address = new ArrayList<>(); //Init the Adress List
+        this._readOrWrite = new ArrayList<>(); //Init the comand list (Read or Write)
+        this._lines = 1024;
+        this._colunms = 4;
+        this._cacheMemory = new Cache(_lines,_colunms); //Init cache with 8 adress size
+        this._requestedInformation = new ProcessorStats();
         
         //If textType = 1 try open .txt file format, else try open binary file
-        if (textType) {
+        if (!textType) {
             this.ReadBinaryFile();
         } else {
             this.ReadTextFile();
         }
     }
 
-    public static void main(String[] args) {
-
-        Processor sample = new Processor("/home/pmargreff/Dropbox/faculdade/AOC_II/Cache/IO/arqTexto1_rw_10.txt", false);
+    public static void main(String[] argv) {
         
+        Processor sample = new Processor("/home/pmargreff/Dropbox/faculdade/AOC_II/Cache/IO/arqTexto1_rw_10k.txt", true);
+        sample.MissHitAverage();
     }
 
     private void ReadTextFile() {
@@ -114,15 +117,45 @@ public class Processor {
         }
     }
     
-    public ProcessorStats MissHitAverage(){
-        for (Integer address : _address) {
-            
-            if(TestHere){
-                
-                
+    public void MissHitAverage(){
+        ProcessorStats stats = new ProcessorStats();
+        int rest;
+        int total;
+        Cell tempCache;
+//        System.out.println(_address.size());
+        for (int i = 0; i < _address.size(); i++) {
+//            System.out.println(_address.get(i));
+           
+           rest =(int) _address.get(i) % _colunms;
+           total = (int) (_address.get(i) / _colunms);
+           total %= _lines;
+           tempCache = _cacheMemory.getCell((total * _colunms) + rest);
+//           System.out.println(tempCache.getTag() + "TAG na Cache");
+           if ((tempCache.getValidate()) && (tempCache.getTag() == _address.get(i))){
+               stats.addHit();
             } else {
-                
-            }
+//               System.out.println( "BLOCO ");
+               for (int j = 0; j < 4; j++){
+                   _cacheMemory.getCell((total * _colunms) + j).setTag(_address.get(i) - rest + j); 
+//                   System.out.print( " " + (_address.get(i) - rest + j));
+                   _cacheMemory.getCell((total * _colunms) + j).setValidate(true);
+                   
+               }   
+               stats.addMiss();
+            } 
+//           System.out.println("Hit: " + stats.getHit() + " Miss: " + stats.getMiss());
+           
         }
+//        System.out.println(_cacheMemory.getSize());
+        System.out.println("Hit: " + stats.getHit() + " Miss: " + stats.getMiss());
+        setRequestedInformation(stats);
+    }
+
+    public ProcessorStats getRequestedInformation() {
+        return _requestedInformation;
+    }
+
+    private void setRequestedInformation(ProcessorStats _requestedInformation) {
+        this._requestedInformation = _requestedInformation;
     }
 }

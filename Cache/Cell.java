@@ -1,12 +1,12 @@
 package Cache;
 
-public class Cel {
+public class Cell {
 	private boolean _validate;
 	private int _tag;
 
-	Cel(){
-		_validate = false;
-		_tag = 0;
+	Cell(){
+            _validate = false;
+            _tag = 0;
 	}
 
 	boolean getValidate(){
