@@ -1,4 +1,4 @@
-package Cache;
+
 
 public class Cell {
 	private boolean _validate;
