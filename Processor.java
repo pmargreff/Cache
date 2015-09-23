@@ -131,22 +131,23 @@ public class Processor {
         ProcessorStats stats = new ProcessorStats();
         int rest;
         int total;
+        int tag;
         Cell tempCache;
 //        System.out.println(_address.size());
         for (int i = 0; i < _address.size(); i++) {
 //            System.out.println(_address.get(i));
            
            rest =(int) _address.get(i) % _colunms;
-           total = (int) (_address.get(i) / _colunms);
+           tag = total = (int) (_address.get(i) / _colunms);
            total %= _lines;
            tempCache = _cacheMemory.getCell((total * _colunms) + rest);
 //           System.out.println(tempCache.getTag() + "TAG na Cache");
-           if ((tempCache.getValidate()) && (tempCache.getTag() == _address.get(i))){
+           if ((tempCache.getValidate()) && (tempCache.getTag() == tag)){
                stats.addHit();
             } else {
 //               System.out.println( "BLOCO ");
                for (int j = 0; j < 4; j++){
-                   _cacheMemory.getCell((total * _colunms) + j).setTag(_address.get(i) - rest + j); 
+                   _cacheMemory.getCell((total * _colunms) + j).setTag(tag); 
 //                   System.out.print( " " + (_address.get(i) - rest + j));
                    _cacheMemory.getCell((total * _colunms) + j).setValidate(true);
                    
