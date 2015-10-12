@@ -43,14 +43,15 @@ public class Processor {
         String path;
         
         if ( argv.length == 2){
-            lines = Integer.parseInt(argv[0]);
-            path = argv[1];
+//            lines = Integer.parseInt(argv[0]);
+//            path = argv[1];
+              lines = 128;
+              path = " IO/arqTexto1_rw_10k.txt ";
             Processor sample = new Processor(lines, path);
             sample.MissHitAverage();
         } else {
             System.out.println("ERROR! Argumento: Número_de_blocos<int> caminho_arquivo_entrada<String>");
         }
-//        Processor sample = new Processor("/home/pmargreff/Dropbox/faculdade/AOC_II/Cache/IO/arqTexto1_rw_10k.txt", true);
 //        
     }
 
