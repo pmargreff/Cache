@@ -39,6 +39,7 @@ public class Cache {
         return _blocks.get(index);
     }
 
+
     public int getSize() {
         return this._blocks.size();
     }
