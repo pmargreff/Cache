@@ -14,7 +14,7 @@ public class Block {
         this._info = new ArrayList<>(size);
     }
 
-    public boolean isValidate() {
+    public boolean getValidate() {
         return _validate;
     }
 
@@ -36,6 +36,14 @@ public class Block {
    
     public void setInfo(ArrayList<Cell> _info) {
         this._info = _info;
+    }
+    
+    public Cell getCell (int n) {
+        return _info.get(n);
+    }
+    
+    public void setCell (Cell newCell, int index) {
+        _info.set(index, newCell);
     }
     
 }
