@@ -69,7 +69,7 @@ public class Processor {
     
     public static void main(String[] argv) {
         String path;
-        path = "IO/arqTexto1_rw_10k.txt";
+        path = "arqTexto1_rw_10k.txt";
         int setsNumber = 128;
         
         Processor sample = new Processor(setsNumber, path);
@@ -176,7 +176,8 @@ public class Processor {
         int tag; //Tag on that will be on cache memory
         int rest;        
         int blockLine; //block line that will be changed
-        Cell tempCell;
+        Block tempBlock;
+        //tempBlock = new Block(_blockSizeL1D);
 
         //run for all cache's cells
         for (int i = 0; i < _address.size(); i++) {
@@ -186,14 +187,14 @@ public class Processor {
                 rest = (int) _address.get(i) % _blockSizeL1D; //absolute address modulo size blocks 
                 tag = blockLine = (int) (_address.get(i) / _blockSizeL1D);                
                 blockLine %= _setsNumberL1D; //
-                tempCell = _cacheL1D.getCell((blockLine * _blockSizeL1D) + rest); //
+                tempBlock = _cacheL1D.getBlock(blockLine);
 
-                if ((tempCell.getValidate()) && (tempCell.getTag() == tag)) { //if the hit case only add hit counter
+                if ((tempBlock.getValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
                     statsL1D.addHit();
                 } else {
                     for (int j = 0; j < this._blockSizeL1D; j++) { //else, set the memmory address on cache
-                        _cacheL1D.getCell((blockLine * _blockSizeL1D) + j).setTag(tag);
-                        _cacheL1D.getCell((blockLine * _blockSizeL1D) + j).setValidate(true);
+                        _cacheL1D.getBlock(blockLine).setTag(tag);
+                        _cacheL1D.getBlock(blockLine).setValidate(true);
                     }
                     statsL1D.addMiss();
                 }
@@ -202,14 +203,14 @@ public class Processor {
                 rest = (int) _address.get(i) % _blockSizeL1I; //absolute address modulo size blocks 
                 tag = blockLine = (int) (_address.get(i) / _blockSizeL1I);                
                 blockLine %= _setsNumberL1I; //
-                tempCell = _cacheL1I.getCell((blockLine * _blockSizeL1I) + rest); //
+                tempBlock = _cacheL1I.getBlock(blockLine); //
 
-                if ((tempCell.getValidate()) && (tempCell.getTag() == tag)) { //if the hit case only add hit counter
+                if ((tempBlock.getValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
                     statsL1I.addHit();
                 } else {
                     for (int j = 0; j < this._blockSizeL1I; j++) { //else, set the memmory address on cache
-                        _cacheL1I.getCell((blockLine * _blockSizeL1I) + j).setTag(tag);
-                        _cacheL1I.getCell((blockLine * _blockSizeL1I) + j).setValidate(true);
+                        _cacheL1I.getBlock(blockLine).setTag(tag);
+                        _cacheL1I.getBlock(blockLine).setValidate(true);
                     }
                     statsL1I.addMiss();
                 }
