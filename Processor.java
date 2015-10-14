@@ -37,14 +37,14 @@ public class Processor {
         this._path = path; //get the path 
         this._address = new ArrayList<>(); //Init the Adress List
         this._requestType = new ArrayList<>(); //Init the comand list (Read or Write)
-        this._setsNumberL1D = 1;
-        this._blockSizeL1D = 254;
-        this._setsNumberL1I = 1;
-        this._blockSizeL1I = 254;
-        this._setsNumberL2 = 1;
-        this._blockSizeL2 = 254;
+        this._setsNumberL1D = 128;
+        this._blockSizeL1D = 2;
+        this._setsNumberL1I = 128;
+        this._blockSizeL1I = 2;
+        this._setsNumberL2 = 128;
+        this._blockSizeL2 = 2;
         
-        this._assoc = 3;
+        this._assoc = 2;
         
         this._splitAddress = 1000;
         
@@ -169,7 +169,9 @@ public class Processor {
 //        int rest;        
 //        int blockLine; //block line that will be changed
 //        Cell tempCell;
-
+        _cacheL1D.setL2(_cacheL2U);
+        _cacheL1I.setL2(_cacheL2U);
+        
         //run for all cache's cells
         for (int i = 0; i < _address.size(); i++) {
             
