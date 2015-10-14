@@ -6,12 +6,16 @@ import java.util.ArrayList;
 public class Block {
     public boolean _validate;
     public int _tag;
-    public ArrayList<Cell> _info;
+    public ArrayList<Cell> _cells;
     
     public Block(int size) {
         this._validate = false;
         this._tag = 0;
-        this._info = new ArrayList<>(size);
+        this._cells = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            Cell c = new Cell();
+            _cells.add(i, c);
+        }
     }
 
     public boolean getValidate() {
@@ -30,20 +34,20 @@ public class Block {
         this._tag = _tag;
     }
     
-    public ArrayList<Cell> getInfo() {
-        return _info;
+    public ArrayList<Cell> getCells() {
+        return _cells;
     }
    
-    public void setInfo(ArrayList<Cell> _info) {
-        this._info = _info;
+    public void setCells(ArrayList<Cell> _cells) {
+        this._cells = _cells;
     }
     
     public Cell getCell (int n) {
-        return _info.get(n);
+        return _cells.get(n);
     }
     
     public void setCell (Cell newCell, int index) {
-        _info.set(index, newCell);
+        _cells.set(index, newCell);
     }
     
 }
