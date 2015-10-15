@@ -4,13 +4,9 @@ import java.util.ArrayList;
  * @author pmargreff
  */
 public class Set {
-    public boolean _validate;
-    public int _tag;
     public ArrayList<Block> _blocks;
     
     public Set(int size, int bSize) {
-        this._validate = false;
-        this._tag = 0;
         this._blocks = new ArrayList<>(size);
         
         for (int i = 0; i < size; i++) {
@@ -19,22 +15,6 @@ public class Set {
         }
     }
 
-    public boolean getValidate() {
-        return _validate;
-    }
-
-    public void setValidate(boolean _validate) {
-        this._validate = _validate;
-    }
- 
-    public int getTag() {
-        return _tag;
-    }
-
-    public void setTag(int _tag) {
-        this._tag = _tag;
-    }
-    
     public ArrayList<Block> getBlocks() {
         return _blocks;
     }
