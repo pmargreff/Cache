@@ -45,16 +45,16 @@ public class Processor {
         this._address = new ArrayList<>(); //Init the Adress List
         this._requestType = new ArrayList<>(); //Init the comand list (Read or Write)
 
-        this._nSetsL1D = 128;
-        this._assocL1D = 1;
-        this._nSetsL1I = 128;
-        this._assocL1I = 1;
+        this._nSetsL1D = 1;
+        this._assocL1D = 128;
+        this._nSetsL1I = 1;
+        this._assocL1I = 32;
 //        this._nSetsL2U = 1;
 //        this._assocL2U = 1;
 
-        this._bSizeL1D = 4;
-        this._bSizeL1I = 4;
-        this._splitAddress = 512;
+        this._bSizeL1D = 6;
+        this._bSizeL1I = 1;
+        this._splitAddress = 500;
 
         this._cacheL1D = new Cache(this._nSetsL1D, this._assocL1D, this._bSizeL1D); //Init cache with split address plus 1
         this._cacheL1I = new Cache(this._nSetsL1I, this._assocL1I, this._bSizeL1I); //Init cache with the rest of size
