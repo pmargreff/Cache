@@ -1,29 +1,16 @@
-
-
+/**
+ *
+ * @author pmargreff
+ */
 public class Cell {
-	private boolean _validate;
-        private boolean _dirty;
-	private int _tag;
+    int _data;
 
-	Cell(){
-            _validate = false;
-            _tag = 0;
-            _dirty = false;
-	}
+    public Cell() {
+        this._data = 0;
+    }
 
-	boolean getValidate(){
-		return _validate;
-	}
-
-	void setValidate(boolean newBool){
-		this._validate = newBool;
-	}
-
-	int getTag(){
-		return _tag;
-	}
-
-	void setTag(int newTag){
-		this._tag = newTag;
-	}
+    public Cell(int data) {
+        this._data = data;
+    }
+    
 }

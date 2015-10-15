@@ -1,7 +1,3 @@
-
-
-
-
 /**
  *
  * @author pmargreff
@@ -14,11 +10,11 @@ public class ProcessorStats {
         this._hit = 0;
         this._miss = 0;
     }
-    
+
     public void addMiss(){
         this._miss++;
     }
-    
+
     public void  addHit(){
         this._hit++;
     }
@@ -27,8 +23,8 @@ public class ProcessorStats {
         return _miss;
     }
 
-    
+
     public int getHit() {
         return _hit;
-    }  
+    }
 }

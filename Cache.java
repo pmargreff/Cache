@@ -4,116 +4,97 @@ import java.util.Random;
 
 public class Cache {
 
-    private ArrayList<Block> _blocks;
-    private ArrayList<Cell> _cells;
-    private int _cellsPerBlock;
-    private int _numberBlocks;
+    private ArrayList<Set> _sets;
     private int _associative;
+    private int _nSets;
+    private int _bSize;
     public ProcessorStats _stats;
-    private Cache L2;
-    
 
-    public Cache(int width, int assoc) {
-        this._cellsPerBlock = width;
-        this._numberBlocks = 1;
-        this._blocks = new ArrayList<>(width);
-        this._stats = new ProcessorStats();
+    public Cache(int nSets, int assoc, int bSize) {
         this._associative = assoc;
+        this._nSets = nSets;
+        this._sets = new ArrayList<>(_nSets);
+        this._bSize = bSize;
+        this._stats = new ProcessorStats();
 
-        for (int i = 0; i < _numberBlocks; i++) {
-            Block b = new Block(i);
-            _blocks.add(i, b);
+        for (int i = 0; i < this._associative; i++) {
+            Set s = new Set(this._nSets, this._bSize);
+            _sets.add(i, s);
         }
     }
 
-    public Cache(int height, int width, int assoc) {
-        this._cellsPerBlock = width;
-        this._numberBlocks = height;
-        this._blocks = new ArrayList<>(_numberBlocks);
-        this._stats = new ProcessorStats();
-        this._associative = assoc;
-
-        for (int i = 0; i < _numberBlocks; i++) {
-            Block b = new Block(_cellsPerBlock);
-            _blocks.add(i, b);
-        }
-    }
-    
-    public void setL2 (Cache L2){
-        this.L2 = L2;
-    }
-
-    public Block getBlock(int index) {
-        return _blocks.get(index);
+    public Set getSet(int index) {
+        return _sets.get(index);
     }
 
     public int getSize() {
-        return this._blocks.size();
+        return this._sets.size();
     }
 
-    public void addressSearch(int address) {
-        if (_associative == 1) {
-            directMapped(address);
-        } else if (_associative == 2) {
-            setAssociative(address);
-        } else if (_associative == 3) {
-            fullyAssociative(address);
+    public void addressSearch(int address, int assoc,int nSets) {
+        if (assoc >= 1 && nSets >= 1) {
+            if (assoc == 1) {
+                directMapped(address);
+            } else if (nSets == 1) {
+                fullyAssociative(address);
+            } else {
+                setAssociative(address);
+            }
         } else {
-            System.out.println("Mapping ERROR!!!");
+//            error message
         }
     }
 
     //só vou mijar
     public void directMapped(int address) {
         int tag; //Tag on that will be on cache memory
+        int blockIndex; //block line that will be changed
+        Block tempBlock = new Block(this._bSize);
         int rest;
-        int blockLine; //block line that will be changed
-        Block tempBlock;
 
-        rest = (int) address % _cellsPerBlock; //absolute address modulo size blocks 
-        tag = blockLine = (int) (address / _cellsPerBlock);
-        blockLine %= _numberBlocks; //
-        tempBlock = _blocks.get(blockLine); //
+        blockIndex = address / _bSize; //
+        blockIndex %= _nSets;
+        
+        tag = address / _bSize;
+        tag /= _nSets;
+//        tag = (int) (address / _nSets);
+        tempBlock = _sets.get(0).getBlock(blockIndex); //
 
         if ((tempBlock.getValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
             _stats.addHit();
         } else {
-            _blocks.get(blockLine).setTag(tag);
-            _blocks.get(blockLine).setValidate(true);
+            _sets.get(0).getBlock(blockIndex).setTag(tag);
+            _sets.get(0).getBlock(blockIndex).setValidate(true);
             _stats.addMiss();
-            //L2.addressSearch(address);
-            
+  
         }
     }
 
     public void setAssociative(int address) {
         int set;
         int i;
-        set = address % _numberBlocks;
-        //for(i=0;i<_cellsPerBlock && ( _blocks.get(set).getCells().get(i).getTag()!=((int)address/_numberBlocks) && _blocks.get(set).getCells().get(i).getValidate()==true); i++);
-        i=0;
-        while(i<_cellsPerBlock && ( _blocks.get(set).getCells().get(i).getTag()!=((int)address/_numberBlocks))) {
+        set = address % _nSets;
+        //for(i=0;i<_cellsPerBlock && ( _sets.get(set).getBlocks().get(i).getTag()!=((int)address/_nSets) && _sets.get(set).getBlocks().get(i).getValidate()==true); i++);
+        i = 0;
+        while (i < _associative && (_sets.get(set).getBlocks().get(i).getTag() != ((int) address / _nSets))) {
             i++;
         }
-                
-        if(i>=_cellsPerBlock) {
+
+        if (i >= _associative) {
             _stats.addMiss();
             //L2.addressSearch(address);
-            for(i=0;i<_cellsPerBlock && _blocks.get(set).getCells().get(i).getValidate()==true;i++);
-            if(i>=_cellsPerBlock){
+            for (i = 0; i < _associative && _sets.get(set).getBlocks().get(i).getValidate() == true; i++);
+            if (i >= _associative) {
                 Random place = new Random();
-                int index = place.nextInt(_cellsPerBlock);
-                _blocks.get(set).getCells().get(index).setValidate(true);
-                _blocks.get(set).getCells().get(index).setTag((int)address/_numberBlocks);
+                int index = place.nextInt(_associative);
+                _sets.get(set).getBlocks().get(index).setValidate(true);
+                _sets.get(set).getBlocks().get(index).setTag((int) address / _nSets);
+            } else {
+                _sets.get(set).getBlocks().get(i).setValidate(true);
+                _sets.get(set).getBlocks().get(i).setTag((int) address / _nSets);
             }
-            else {
-                _blocks.get(set).getCells().get(i).setValidate(true);
-                _blocks.get(set).getCells().get(i).setTag((int)address/_numberBlocks);
-            }
-        }
-        else {
+        } else {
             _stats.addHit();
-            
         }
     }
 
@@ -121,30 +102,29 @@ public class Cache {
         int i;
         i = 0;
         boolean find = false;
-        while (!find && i < _cellsPerBlock) { //check if address are in Cache
-  
-            if (_blocks.get(0).getCells().get(i).getValidate() == true && _blocks.get(0).getCells().get(i).getTag() == address) {
+        while (!find && i < _associative) { //check if address are in Cache
+
+            if (_sets.get(0).getBlocks().get(i).getValidate() == true && _sets.get(0).getBlocks().get(i).getTag() == address) {
                 find = true;
                 _stats.addHit();
             }
             i++;
         }
-        if (i >= _cellsPerBlock) { //if don't find the address in cache, search empty cell
-            i=0;
-            while (i < _cellsPerBlock && _blocks.get(0).getCells().get(i).getValidate()) { 
+        if (i >= _associative) { //if don't find the address in cache, search empty cell
+            i = 0;
+            while (i < _associative && _sets.get(0).getBlocks().get(i).getValidate()) {
                 i++;
             }
-            if(i<_cellsPerBlock){  //if find a empty cell, set in this cell 
-                _blocks.get(0).getCells().get(i).setTag(address);
-                _blocks.get(0).getCells().get(i).setValidate(true);
+            if (i < _associative) {  //if find a empty cell, set in this cell
+                _sets.get(0).getBlocks().get(i).setTag(address);
+                _sets.get(0).getBlocks().get(i).setValidate(true);
                 _stats.addMiss();
                 //L2.addressSearch(address);
-            }
-            else { // if don't find a empty cell, select a random Cell to set
+            } else { // if don't find a empty cell, select a random Block to set
                 Random place = new Random();
-                int index = place.nextInt(_cellsPerBlock);
-                _blocks.get(0).getCells().get(index).setTag(address);
-                _blocks.get(0).getCells().get(index).setValidate(true);
+                int index = place.nextInt(_associative);
+                _sets.get(0).getBlocks().get(index).setTag(address);
+                _sets.get(0).getBlocks().get(index).setValidate(true);
                 _stats.addMiss();
                 //L2.addressSearch(address);
             }
