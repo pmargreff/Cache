@@ -5,9 +5,13 @@ import java.util.Random;
 public class Cache {
 
     private ArrayList<Set> _sets;
+
     private int _associative;
     private int _nSets;
     private int _bSize;
+
+    Cache _nextLevel;
+
     public ProcessorStats _stats;
 
     public Cache(int nSets, int assoc, int bSize) {
@@ -23,6 +27,20 @@ public class Cache {
         }
     }
 
+    public Cache(int nSets, int assoc, int bSize, Cache nextLevel) {
+        this._associative = assoc;
+        this._nSets = nSets;
+        this._sets = new ArrayList<>();
+        this._bSize = bSize;
+        this._stats = new ProcessorStats();
+        this._nextLevel = nextLevel;
+
+        for (int i = 0; i < this._associative; i++) {
+            Set s = new Set(this._nSets, this._bSize);
+            _sets.add(i, s);
+        }
+    }
+
     public Set getSet(int index) {
         return _sets.get(index);
     }
@@ -31,48 +49,64 @@ public class Cache {
         return this._sets.size();
     }
 
-    public void addressSearch(int address, int assoc, int nSets) {
-        if (assoc >= 1 && nSets >= 1) {
-            if (assoc == 1) {
+    public int access(int address, int accessType) {
+        if (this._associative >= 1 && this._nSets >= 1) {
+            if (this._associative == 1) {
 
 //                TODO: Change it to be doing on interface
 //                this._bSize = 4; //if is direct mapped force the byte size to be 4
 //                this._nSets = 1024; //if is direct mapped force the sets number 
-                directMapped(address);
-            } else if (nSets == 1) {
-                fullyAssociative(address);
-            } else if (nSets > 1 && assoc > 1) {
-                setAssociative(address);
+                return directMapped(address, accessType);
+            } else if (this._nSets == 1) {
+                fullyAssociative(address, accessType);
+            } else if (this._nSets > 1 && this._associative > 1) {
+                setAssociative(address, accessType);
             }
         } else {
 //            error message
         }
+        return 0;
     }
 
-    public void directMapped(int address) {
+    public int directMapped(int address, int accessType) {
+        int adressReturn = 0;
         int tag; //Tag on that will be on cache memory
         int blockIndex; //block line that will be changed
-        Block tempBlock = new Block(this._bSize); //new block to replacement
+        Block tempBlock; //new block to replacement
 
-        blockIndex = address / _bSize; //
-        blockIndex %= _nSets;
+        blockIndex = address / this._bSize; //
+        blockIndex %= this._nSets;
 
-        tag = address / _bSize;
-        tag /= _nSets;
-//        tag = (int) (address / _nSets);
+        tag = address / this._bSize;
+        tag /= this._nSets;
+
         tempBlock = _sets.get(0).getBlock(blockIndex); //
+        if (accessType == 0) {
+            if ((tempBlock.isValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
+                _stats.addHit();
+            } else if ((_nextLevel != null) && (_nextLevel.access(address, 0) == address) && (!getSet(0).getBlock(blockIndex).isDirty())) {
+                _stats.addMiss();
+                int tagOld = _nextLevel.getSet(0).getBlock(blockIndex).getTag();
+                boolean validateOld = _nextLevel.getSet(0).getBlock(blockIndex).isValidate();
+                boolean dirtyOld = _nextLevel.getSet(0).getBlock(blockIndex).isDirty();
 
-        if ((tempBlock.getValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
-            _stats.addHit();
+                getSet(0).getBlock(blockIndex).setTag(tagOld);
+                getSet(0).getBlock(blockIndex).setValidate(validateOld);
+                getSet(0).getBlock(blockIndex).setDirty(dirtyOld);
+            } else {
+                _stats.addMiss();
+                _sets.get(0).getBlock(blockIndex).setTag(tag);
+                _sets.get(0).getBlock(blockIndex).setValidate(true);
+                _sets.get(0).getBlock(blockIndex).setDirty(true);
+
+            }
         } else {
-            _sets.get(0).getBlock(blockIndex).setTag(tag);
-            _sets.get(0).getBlock(blockIndex).setValidate(true);
-            _stats.addMiss();
 
         }
+        return adressReturn;
     }
 
-    public void setAssociative(int address) {
+    public void setAssociative(int address, int accessType) {
         /**
          * Only do a div address to bSize, if was need get and set memory data
          * is only necessary do a loop and set or get cells in a Block _bSize
@@ -85,8 +119,8 @@ public class Cache {
         boolean hasFound = false;
         boolean hasOccupied = true;
 
-        for (int i = 0; i < _nSets; i++) {
-            if ((_sets.get(associativeIndex).getBlocks().get(i).getValidate()) && (_sets.get(associativeIndex).getBlocks().get(i).getTag() == tag)) {
+        for (int i = 0; i < getnSets(); i++) {
+            if ((_sets.get(associativeIndex).getBlocks().get(i).isValidate()) && (_sets.get(associativeIndex).getBlocks().get(i).getTag() == tag)) {
                 _stats.addHit();
                 hasFound = true;
                 break;
@@ -95,8 +129,8 @@ public class Cache {
 
         if (!hasFound) {
             _stats.addMiss();
-            for (int i = 0; i < _nSets; i++) {
-                if (!_sets.get(associativeIndex).getBlock(i).getValidate()) {
+            for (int i = 0; i < getnSets(); i++) {
+                if (!_sets.get(associativeIndex).getBlock(i).isValidate()) {
                     _sets.get(associativeIndex).getBlock(i).setValidate(true);
                     _sets.get(associativeIndex).getBlock(i).setTag(tag);
                     hasOccupied = true;
@@ -109,7 +143,7 @@ public class Cache {
         if (!hasOccupied) {
 
             Random random = new Random();
-            int index = random.nextInt(_nSets);
+            int index = random.nextInt(getnSets());
             _sets.get(associativeIndex).getBlock(index).setValidate(true);
             _sets.get(associativeIndex).getBlock(index).setTag(tag);
 
@@ -117,45 +151,66 @@ public class Cache {
 
     }
 
-    public void fullyAssociative(int address) {
+    public void fullyAssociative(int address, int accessType) {
         /**
          * Only do a div address to bSize, if was need get and set memory data
          * is only necessary do a loop and set or get cells in a Block _bSize
          * times
          */
-        address /= _bSize;
+        address /= getbSize();
         int tag;
         boolean hasFound = false;
         boolean hasOccupied = true;
 
 //          search for adress in cache
-        for (int i = 0; i < _associative; i++) {
-            if ((_sets.get(i).getBlock(0).getValidate()) && (_sets.get(i).getBlock(0).getTag() == address)) {
+        for (int i = 0; i < getAssociative(); i++) {
+            if ((_sets.get(i).getBlock(0).isValidate()) && (_sets.get(i).getBlock(0).getTag() == address)) {
                 _stats.addHit();
                 hasFound = true;
                 break; //if find value get out a loop
             }
         }
-        
+
         //if don't find adress count hit and replace, first search by a empty 
         //place, after it set a block in a random index
         if (!hasFound) {
             _stats.addMiss();
-            for (int i = 0; i < _associative; i++) {
-                if ((!_sets.get(i).getBlock(0).getValidate())) {
+            for (int i = 0; i < getAssociative(); i++) {
+                if ((!_sets.get(i).getBlock(0).isValidate())) {
                     _sets.get(i).getBlock(0).setValidate(true);
                     _sets.get(i).getBlock(0).setTag(address);
                     hasOccupied = true;
                     break; //if find value get out a loop
                 }
-                hasOccupied = false; 
+                hasOccupied = false;
             }
         }
         if (!hasOccupied) {
             Random random = new Random();
-            int index = random.nextInt(_associative);
+            int index = random.nextInt(getAssociative());
             _sets.get(index).getBlock(0).setValidate(true);
             _sets.get(index).getBlock(0).setTag(address);
         }
+    }
+
+    /**
+     * @return the _associative
+     */
+    public int getAssociative() {
+        return _associative;
+    }
+
+    /**
+     * @return the _nSets
+     */
+    public int getnSets() {
+        return _nSets;
+    }
+
+    /**
+     * @return the _bSize
+     */
+    public int getbSize() {
+        return _bSize;
     }
 }

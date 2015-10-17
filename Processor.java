@@ -14,7 +14,7 @@ import java.lang.Integer;
 public class Processor {
 
     private ArrayList<Integer> _address; //Memory Adress
-    private ArrayList<Integer> _requestType; //Define the action: 0 read memory, 1 writte on memory
+    private ArrayList<Integer> _accessType; //Define the action: 0 read memory, 1 writte on memory
     private String _path; //Path to memory file
 
     //Caches
@@ -22,43 +22,44 @@ public class Processor {
     private Cache _cacheL1I; //Instructions cache - L1
     private Cache _cacheL2U; //Unified cache - L2
 
-    //Caches sizes
-    private int _assocL1D; //Blocks size in L1D
-    private int _nSetsL1D; //Number of blocks in L1D
-    private int _bSizeL1D;
-    
-    private int _assocL1I; //Blocks size in L1I
-    private int _nSetsL1I; //Number of blocks in L1I
-    private int _bSizeL1I;
-    
-    private int _assocL2U; //Blocks size in L2
-    private int _nSetsL2U; //Number of blocks in L2
-
-
     private int _splitAddress; //Numbers equal or less (<=) than _splitAdress will be save on data memory
 
-    private int _assocOld;
-
     public Processor(String path) {
+        //Caches sizes
+        int assocL1D; //Blocks size in L1D
+        int nSetsL1D; //Number of blocks in L1D
+        int bSizeL1D;
 
+        int assocL1I; //Blocks size in L1I
+        int nSetsL1I; //Number of blocks in L1I
+        int bSizeL1I;
+
+        int assocL2U; //Blocks size in L1I
+        int nSetsL2U; //Number of blocks in L1I
+        int bSizeL2U;
+        
         this._path = path; //get the path
         this._address = new ArrayList<>(); //Init the Adress List
-        this._requestType = new ArrayList<>(); //Init the comand list (Read or Write)
+        this._accessType = new ArrayList<>(); //Init the comand list (Read or Write)
 
-        this._nSetsL1D = 1;
-        this._assocL1D = 64;
-        this._nSetsL1I = 1;
-        this._assocL1I = 1;
-//        this._nSetsL2U = 1;
-//        this._assocL2U = 1;
+        nSetsL1D = 128;
+        assocL1D = 1;
+        bSizeL1D = 4;
 
-        this._bSizeL1D = 4;
-        this._bSizeL1I = 4;
+        nSetsL1I = 56;
+        assocL1I = 1;
+        bSizeL1I = 4;
+
+        nSetsL2U = 1024;
+        assocL2U = 1;
+        bSizeL2U = 4;
+
         this._splitAddress = 1000;
 
-        this._cacheL1D = new Cache(this._nSetsL1D, this._assocL1D, this._bSizeL1D); //Init cache with split address plus 1
-        this._cacheL1I = new Cache(this._nSetsL1I, this._assocL1I, this._bSizeL1I); //Init cache with the rest of size
-//        this._cacheL2U = new Cache(this._nSetsL2U, this._assocL2U, this._bSize);
+        this._cacheL2U = new Cache(nSetsL2U, assocL2U, bSizeL2U);
+
+        this._cacheL1D = new Cache(nSetsL1D, assocL1D, bSizeL1D, _cacheL2U); //Init cache with split address plus 1
+        this._cacheL1I = new Cache(nSetsL1I, assocL1I, bSizeL1I, _cacheL2U); //Init cache with the rest of size
 
         boolean textType = true; //change to read a binary file
         //If textType = 1 try open .txt file format, else try open binary file
@@ -74,7 +75,7 @@ public class Processor {
         String path;
         path = "IO/arqTexto1_rw_10k.txt";
 
-        Processor sample = new Processor( path);
+        Processor sample = new Processor(path);
         sample.run();
 
         /*if ( argv.length == 2){
@@ -89,6 +90,7 @@ public class Processor {
          */
         System.out.println("L1 Data - Hit: " + sample._cacheL1D._stats.getHit() + " Miss: " + sample._cacheL1D._stats.getMiss());
         System.out.println("L1 Instructions - Hit: " + sample._cacheL1I._stats.getHit() + " Miss: " + sample._cacheL1I._stats.getMiss());
+        System.out.println("L2 Unified - Hit: " + sample._cacheL2U._stats.getHit() + " Miss: " + sample._cacheL2U._stats.getMiss());
     }
 
     /**
@@ -110,7 +112,7 @@ public class Processor {
                     _address.add(Integer.parseInt(line));
                     arrayFlag = false;
                 } else {
-                    _requestType.add(Integer.parseInt(line));
+                    _accessType.add(Integer.parseInt(line));
                     arrayFlag = true;
                 }
             }
@@ -174,9 +176,9 @@ public class Processor {
         for (int i = 0; i < _address.size(); i++) {
 
             if (this._address.get(i) <= this._splitAddress) {
-                _cacheL1D.addressSearch(_address.get(i), this._assocL1D, this._nSetsL1D);
+                _cacheL1D.access(_address.get(i), _accessType.get(i));
             } else {
-                _cacheL1I.addressSearch(_address.get(i), this._assocL1I, this._nSetsL1I);
+                _cacheL1I.access(_address.get(i), _accessType.get(i));
             }
         }
     }
