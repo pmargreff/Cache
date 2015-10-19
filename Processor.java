@@ -46,7 +46,7 @@ public class Processor {
         assocL1D = 1;
         bSizeL1D = 4;
 
-        nSetsL1I = 56;
+        nSetsL1I = 128;
         assocL1I = 1;
         bSizeL1I = 4;
 
@@ -54,7 +54,7 @@ public class Processor {
         assocL2U = 1;
         bSizeL2U = 4;
 
-        this._splitAddress = 1000;
+        this._splitAddress = 500;
 
         this._cacheL2U = new Cache(nSetsL2U, assocL2U, bSizeL2U);
 

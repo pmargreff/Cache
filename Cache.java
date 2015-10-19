@@ -80,11 +80,12 @@ public class Cache {
         tag = address / this._bSize;
         tag /= this._nSets;
 
-        tempBlock = _sets.get(0).getBlock(blockIndex); //
-        if (accessType == 0) {
+        tempBlock = _sets.get(0).getBlock(blockIndex);
+
+        if (accessType == 0) { //writte access
             if ((tempBlock.isValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
                 _stats.addHit();
-            } else if ((_nextLevel != null) && (_nextLevel.access(address, 0) == address) && (!getSet(0).getBlock(blockIndex).isDirty())) {
+            } else if ((_nextLevel != null) && (_nextLevel.access(address, 0) == address) && (!getSet(0).getBlock(blockIndex).isDirty())) { //try get in the noxt level if exists
                 _stats.addMiss();
                 int tagOld = _nextLevel.getSet(0).getBlock(blockIndex).getTag();
                 boolean validateOld = _nextLevel.getSet(0).getBlock(blockIndex).isValidate();
@@ -100,8 +101,16 @@ public class Cache {
                 _sets.get(0).getBlock(blockIndex).setDirty(true);
 
             }
-        } else {
-
+        } else { //read access
+            _stats.addMiss();
+            if (_sets.get(0).getBlock(blockIndex).isDirty() && _nextLevel != null) {
+                int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
+                _nextLevel.access(newAddress, 1);
+            } else {
+                _sets.get(0).getBlock(blockIndex).setTag(tag);
+                _sets.get(0).getBlock(blockIndex).setValidate(true);
+                _sets.get(0).getBlock(blockIndex).setDirty(true);
+            }
         }
         return adressReturn;
     }
