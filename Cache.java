@@ -129,18 +129,19 @@ public class Cache {
          * is only necessary do a loop and set or get cells in a Block _bSize
          * times
          */
-        address /= _bSize;
+        int addressTemp;
+        addressTemp = address / _bSize;
 
-        int associativeIndex = address % _associative;
-        int tag = (int) address / _associative;
+        int associativeIndex = addressTemp % _associative;
+        int tag = (int) addressTemp / _associative;
         boolean hasFound = false;
         boolean hasOccupied = true;
 
-        for (int i = 0; i < getnSets(); i++) {
+        for (int i = 0; i < getnSets(); i++) {  //WTF?? Why this for???
             if ((_sets.get(associativeIndex).getBlocks().get(i).isValidate()) && (_sets.get(associativeIndex).getBlocks().get(i).getTag() == tag)) {
                 _stats.addHit();
                 hasFound = true;
-                break;
+               
             }
         }
 
