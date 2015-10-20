@@ -73,7 +73,7 @@ public class Processor {
 
     public static void main(String[] argv) {
         String path;
-        path = "IO/arqTexto1_rw_10k.txt";
+        path = "arqTexto1_rw_10k.txt";
 
         Processor sample = new Processor(path);
         sample.run();

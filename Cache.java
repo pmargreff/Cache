@@ -20,6 +20,7 @@ public class Cache {
         this._sets = new ArrayList<>();
         this._bSize = bSize;
         this._stats = new ProcessorStats();
+        _nextLevel = null;
 
         for (int i = 0; i < this._associative; i++) {
             Set s = new Set(this._nSets, this._bSize);
@@ -69,7 +70,7 @@ public class Cache {
     }
 
     public int directMapped(int address, int accessType) {
-        int adressReturn = 0;
+        
         int tag; //Tag on that will be on cache memory
         int blockIndex; //block line that will be changed
         Block tempBlock; //new block to replacement
@@ -82,27 +83,34 @@ public class Cache {
 
         tempBlock = _sets.get(0).getBlock(blockIndex);
 
-        if (accessType == 0) { //writte access
+        if (accessType == 0) { //Read access
             if ((tempBlock.isValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
                 _stats.addHit();
-            } else if ((_nextLevel != null) && (_nextLevel.access(address, 0) == address) && (!getSet(0).getBlock(blockIndex).isDirty())) { //try get in the noxt level if exists
-                _stats.addMiss();
-                int tagOld = _nextLevel.getSet(0).getBlock(blockIndex).getTag();
+            } else if ((_nextLevel != null) && (_nextLevel.access(address, 0) == address)) { //try get in the next level if exists
+                _stats.addMiss(); //change
+                
+                //save the older data at _nextLevel if this is dirty 
+                if (_sets.get(0).getBlock(blockIndex).isDirty() && _nextLevel != null) {
+                int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
+                _nextLevel.access(newAddress, 1);
+                }
+                
+                //int tagOld = _nextLevel.getSet(0).getBlock(blockIndex).getTag();
                 boolean validateOld = _nextLevel.getSet(0).getBlock(blockIndex).isValidate();
                 boolean dirtyOld = _nextLevel.getSet(0).getBlock(blockIndex).isDirty();
 
-                getSet(0).getBlock(blockIndex).setTag(tagOld);
+                getSet(0).getBlock(blockIndex).setTag(tag);
                 getSet(0).getBlock(blockIndex).setValidate(validateOld);
                 getSet(0).getBlock(blockIndex).setDirty(dirtyOld);
             } else {
-                _stats.addMiss();
+                _stats.addMiss(); //change
                 _sets.get(0).getBlock(blockIndex).setTag(tag);
                 _sets.get(0).getBlock(blockIndex).setValidate(true);
-                _sets.get(0).getBlock(blockIndex).setDirty(true);
+                _sets.get(0).getBlock(blockIndex).setDirty(false);
 
             }
-        } else { //read access
-            _stats.addMiss();
+        } else { //write access
+            _stats.addMiss(); //change
             if (_sets.get(0).getBlock(blockIndex).isDirty() && _nextLevel != null) {
                 int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
                 _nextLevel.access(newAddress, 1);
@@ -112,7 +120,7 @@ public class Cache {
                 _sets.get(0).getBlock(blockIndex).setDirty(true);
             }
         }
-        return adressReturn;
+        return address;
     }
 
     public void setAssociative(int address, int accessType) {
