@@ -42,16 +42,16 @@ public class Processor {
         this._address = new ArrayList<>(); //Init the Adress List
         this._accessType = new ArrayList<>(); //Init the comand list (Read or Write)
 
-        nSetsL1D = 128;
-        assocL1D = 1;
+        nSetsL1D = 1;
+        assocL1D = 128;
         bSizeL1D = 4;
 
-        nSetsL1I = 128;
-        assocL1I = 1;
+        nSetsL1I = 1;
+        assocL1I = 128;
         bSizeL1I = 4;
 
-        nSetsL2U = 1024;
-        assocL2U = 1;
+        nSetsL2U = 1;
+        assocL2U = 10;
         bSizeL2U = 4;
 
         this._splitAddress = 500;

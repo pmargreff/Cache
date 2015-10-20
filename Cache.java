@@ -22,8 +22,8 @@ public class Cache {
         this._stats = new ProcessorStats();
         _nextLevel = null;
 
-        for (int i = 0; i < this._associative; i++) {
-            Set s = new Set(this._nSets, this._bSize);
+        for (int i = 0; i < this._nSets; i++) {
+            Set s = new Set(this._associative, this._bSize);
             _sets.add(i, s);
         }
     }
@@ -36,8 +36,8 @@ public class Cache {
         this._stats = new ProcessorStats();
         this._nextLevel = nextLevel;
 
-        for (int i = 0; i < this._associative; i++) {
-            Set s = new Set(this._nSets, this._bSize);
+        for (int i = 0; i < this._nSets; i++) {
+            Set s = new Set(this._associative, this._bSize);
             _sets.add(i, s);
         }
     }
@@ -167,46 +167,88 @@ public class Cache {
         }
 
     }
-
+    // 0 is read and 1 is write
     public void fullyAssociative(int address, int accessType) {
         /**
          * Only do a div address to bSize, if was need get and set memory data
          * is only necessary do a loop and set or get cells in a Block _bSize
          * times
          */
-        address /= getbSize();
-        int tag;
+        //address /= getbSize();
+        // Don't lost original address, using tag to work
+        int tag = address / getbSize();
         boolean hasFound = false;
         boolean hasOccupied = true;
-
-//          search for adress in cache
-        for (int i = 0; i < getAssociative(); i++) {
-            if ((_sets.get(i).getBlock(0).isValidate()) && (_sets.get(i).getBlock(0).getTag() == address)) {
-                _stats.addHit();
-                hasFound = true;
-                break; //if find value get out a loop
-            }
-        }
-
-        //if don't find adress count hit and replace, first search by a empty 
-        //place, after it set a block in a random index
-        if (!hasFound) {
-            _stats.addMiss();
+        
+        if(accessType==0){
+    //          search for address in cache
             for (int i = 0; i < getAssociative(); i++) {
-                if ((!_sets.get(i).getBlock(0).isValidate())) {
-                    _sets.get(i).getBlock(0).setValidate(true);
-                    _sets.get(i).getBlock(0).setTag(address);
-                    hasOccupied = true;
+                if ((_sets.get(0).getBlock(i).isValidate()) && (_sets.get(0).getBlock(i).getTag() == tag)) {
+                    _stats.addHit();
+                    hasFound = true;
                     break; //if find value get out a loop
                 }
-                hasOccupied = false;
+            }
+
+            //if don't find adress count hit and replace, first search by a empty 
+            //place, after it set a block in a random index
+            if (!hasFound) {
+                _stats.addMiss();
+                if(_nextLevel!=null){
+                    _nextLevel.access(address, 0);
+                }
+                for (int i = 0; i < getAssociative(); i++) {
+                    if ((!_sets.get(0).getBlock(i).isValidate())) {
+                        _sets.get(0).getBlock(i).setValidate(true);
+                        _sets.get(0).getBlock(i).setTag(tag);
+                        hasOccupied = true;
+                        break; //if find value get out a loop
+                    }
+                    hasOccupied = false;
+                }
+            }
+            if (!hasOccupied) {
+                Random random = new Random();
+                int index = random.nextInt(getAssociative());
+                if(_sets.get(0).getBlock(index).isDirty() && _nextLevel!=null){
+                    _nextLevel.access(address, 1);
+                }
+                _sets.get(0).getBlock(index).setValidate(true);
+                _sets.get(0).getBlock(index).setTag(tag);
             }
         }
-        if (!hasOccupied) {
-            Random random = new Random();
-            int index = random.nextInt(getAssociative());
-            _sets.get(index).getBlock(0).setValidate(true);
-            _sets.get(index).getBlock(0).setTag(address);
+        else {
+           for (int i = 0; i < getAssociative(); i++) {
+                if ((_sets.get(0).getBlock(i).isValidate()) && (_sets.get(0).getBlock(i).getTag() == tag)) {
+                    //_stats.addHit();
+                    _sets.get(0).getBlock(i).setDirty(true);
+                    hasFound = true;
+                    break; //if find value get out a loop
+                }
+            }
+           if(!hasFound){
+               
+                for (int i = 0; i < getAssociative(); i++) {
+                    if ((!_sets.get(0).getBlock(i).isValidate())) {
+                        _sets.get(0).getBlock(i).setValidate(true);
+                        _sets.get(0).getBlock(i).setTag(tag);
+                        _sets.get(0).getBlock(i).setDirty(true);
+                        hasOccupied = true;
+                        break; //if find value get out a loop
+                    }
+                    hasOccupied = false;
+                }
+            }
+            if (!hasOccupied) {
+                Random random = new Random();
+                int index = random.nextInt(getAssociative());
+                if(_sets.get(0).getBlock(index).isDirty() && _nextLevel!=null){
+                    _nextLevel.access(address, 1);
+                }
+                _sets.get(0).getBlock(index).setValidate(true);
+                _sets.get(0).getBlock(index).setTag(tag);
+                _sets.get(0).getBlock(index).setDirty(true);
+           }
         }
     }
 
