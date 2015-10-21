@@ -129,6 +129,91 @@ public class Cache {
          * is only necessary do a loop and set or get cells in a Block _bSize
          * times
          */
+        //System.out.println("CONJUNTO ASSOCIATIVO ");
+        boolean find = false;
+        int index;
+        int tag;
+        tag = (address/_bSize)/_nSets;
+        int set;
+        if(accessType==0) {
+            set = (address/_bSize)%_nSets;
+            for(index=0;index<_associative && !find; index++){
+                if(_sets.get(set).getBlocks().get(index).isValidate() && _sets.get(set).getBlocks().get(index).getTag()==tag){
+                    find=true;
+                    _stats.addHit();
+                }
+            }
+            if(!find){
+                if(_nextLevel!=null){
+                    _nextLevel.access(address, accessType);
+                }
+                for(index=0;index<_associative && !find; index++){
+                    if(!_sets.get(set).getBlocks().get(index).isValidate()){
+                        find=true;
+                    }
+                }
+                if(find) {
+                    index--; // a don't know why need this. But work!
+                    _sets.get(set).getBlocks().get(index).setValidate(true);
+                    _sets.get(set).getBlocks().get(index).setTag(tag);
+                    _sets.get(set).getBlocks().get(index).setDirty(false);
+                    _stats.addMiss();
+                }
+                else {
+                    Random random = new Random();
+                    index = random.nextInt(_associative);
+                    if(_sets.get(set).getBlocks().get(index).isDirty() && _nextLevel!=null) {
+                        _nextLevel.access(address, 0);
+                    }
+                    _sets.get(set).getBlocks().get(index).setValidate(true);
+                    _sets.get(set).getBlocks().get(index).setTag(tag);
+                    _sets.get(set).getBlocks().get(index).setDirty(false);
+                    _stats.addMiss();
+                    
+                }
+            }
+        }
+        else {
+            set = (address/_bSize)%_nSets;
+            for(index=0;index<_associative && !find; index++){
+                if(_sets.get(set).getBlocks().get(index).isValidate() && _sets.get(set).getBlocks().get(index).getTag()==tag){
+                    find=true;
+                    _sets.get(set).getBlocks().get(index).setDirty(true);
+                    _stats.addHit();
+                }
+            }
+            if(!find){
+                for(index=0;!find && index<_associative ; index++){
+                    if(!_sets.get(set).getBlocks().get(index).isValidate()){
+                        find=true;
+                    }
+                }
+                if(find){
+                    index--; // a don't know why need this. But work!
+                    _sets.get(set).getBlocks().get(index).setValidate(true);
+                    _sets.get(set).getBlocks().get(index).setTag(tag);
+                    _sets.get(set).getBlocks().get(index).setDirty(true);
+                    _stats.addMiss();
+                }
+                else {
+                    Random random = new Random();
+                    index = random.nextInt(_associative);
+                    if(_sets.get(set).getBlocks().get(index).isDirty() && _nextLevel!=null) {
+                        _nextLevel.access(address, 0);
+                    }
+                    _sets.get(set).getBlocks().get(index).setValidate(true);
+                    _sets.get(set).getBlocks().get(index).setTag(tag);
+                    _sets.get(set).getBlocks().get(index).setDirty(true);
+                    _stats.addMiss();
+                    
+                }
+            }
+                
+        }
+    }
+        
+        
+        /*
         int addressTemp;
         addressTemp = address / _bSize;
 
@@ -166,8 +251,8 @@ public class Cache {
             _sets.get(associativeIndex).getBlock(index).setTag(tag);
 
         }
-
-    }
+*/
+    
     // 0 is read and 1 is write
     public void fullyAssociative(int address, int accessType) {
         /**
