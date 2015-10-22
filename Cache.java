@@ -22,8 +22,8 @@ public class Cache {
         this._stats = new ProcessorStats();
         _nextLevel = null;
 
-        for (int i = 0; i < this._nSets; i++) {
-            Set s = new Set(this._associative, this._bSize);
+        for (int i = 0; i < this._associative; i++) {
+            Set s = new Set(this._nSets, this._bSize);
             _sets.add(i, s);
         }
     }
@@ -36,8 +36,8 @@ public class Cache {
         this._stats = new ProcessorStats();
         this._nextLevel = nextLevel;
 
-        for (int i = 0; i < this._nSets; i++) {
-            Set s = new Set(this._associative, this._bSize);
+        for (int i = 0; i < this._associative; i++) {
+            Set s = new Set(this._nSets, this._bSize);
             _sets.add(i, s);
         }
     }
@@ -50,6 +50,12 @@ public class Cache {
         return this._sets.size();
     }
 
+    /**
+     *
+     * @param address
+     * @param accessType
+     * @return 0 - Haven't , 1 - Have and isn't dirty, 2 - Have and is dirty
+     */
     public int access(int address, int accessType) {
         if (this._associative >= 1 && this._nSets >= 1) {
             if (this._associative == 1) {
@@ -59,9 +65,9 @@ public class Cache {
 //                this._nSets = 1024; //if is direct mapped force the sets number 
                 return directMapped(address, accessType);
             } else if (this._nSets == 1) {
-                fullyAssociative(address, accessType);
+//                fullyAssociative(address, accessType);
             } else if (this._nSets > 1 && this._associative > 1) {
-                setAssociative(address, accessType);
+//                setAssociative(address, accessType);
             }
         } else {
 //            error message
@@ -69,8 +75,7 @@ public class Cache {
         return 0;
     }
 
-    public int directMapped(int address, int accessType) {
-        
+    private int directMapped(int address, int accessType) {
         int tag; //Tag on that will be on cache memory
         int blockIndex; //block line that will be changed
         Block tempBlock; //new block to replacement
@@ -84,43 +89,60 @@ public class Cache {
         tempBlock = _sets.get(0).getBlock(blockIndex);
 
         if (accessType == 0) { //Read access
-            if ((tempBlock.isValidate()) && (tempBlock.getTag() == tag)) { //if the hit case only add hit counter
+            if ((tempBlock.isValidate()) && (tempBlock.getTag() == tag)) { //case find and isn't dirty
                 _stats.addHit();
-            } else if ((_nextLevel != null) && (_nextLevel.access(address, 0) == address)) { //try get in the next level if exists
-                _stats.addMiss(); //change
-                
-                //save the older data at _nextLevel if this is dirty 
-                if (_sets.get(0).getBlock(blockIndex).isDirty() && _nextLevel != null) {
-                int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
-                _nextLevel.access(newAddress, 1);
-                }
-                
-                //int tagOld = _nextLevel.getSet(0).getBlock(blockIndex).getTag();
-                boolean validateOld = _nextLevel.getSet(0).getBlock(blockIndex).isValidate();
-                boolean dirtyOld = _nextLevel.getSet(0).getBlock(blockIndex).isDirty();
+                return 1;
+            } else if ((tempBlock.isValidate()) && (tempBlock.getTag() == tag) && (tempBlock.isDirty())) { //case find and is dirty
+                _stats.addHit();
+                return 2;
+            } else if (_nextLevel != null) { //case find in next level
+                int returnNextLevel = _nextLevel.access(address, 0);
 
-                getSet(0).getBlock(blockIndex).setTag(tag);
-                getSet(0).getBlock(blockIndex).setValidate(validateOld);
-                getSet(0).getBlock(blockIndex).setDirty(dirtyOld);
-            } else {
-                _stats.addMiss(); //change
+                if (getSet(0).getBlock(blockIndex).isDirty()) {
+                    int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
+                    _nextLevel.access(newAddress, 1);
+                }
+
+                if (returnNextLevel == 0) { // if haven't data
+                    _stats.addMiss();
+                    getSet(0).getBlock(blockIndex).setTag(tag);
+                    getSet(0).getBlock(blockIndex).setValidate(true);
+                    getSet(0).getBlock(blockIndex).setDirty(false);
+                    return 0;
+                } else if (returnNextLevel == 1) { //if have and isn't dirty 
+                    _stats.addMiss();
+                    getSet(0).getBlock(blockIndex).setTag(tag);
+                    getSet(0).getBlock(blockIndex).setValidate(true);
+                    getSet(0).getBlock(blockIndex).setDirty(false);
+                    return 0;
+                } else if (returnNextLevel == 2) { //if have and is dirty
+                    _stats.addMiss();
+                    getSet(0).getBlock(blockIndex).setTag(tag);
+                    getSet(0).getBlock(blockIndex).setValidate(true);
+                    getSet(0).getBlock(blockIndex).setDirty(true);
+                    return 0;
+                }
+            } else { //if is in the last level or don't find
+                _stats.addMiss();
                 _sets.get(0).getBlock(blockIndex).setTag(tag);
                 _sets.get(0).getBlock(blockIndex).setValidate(true);
                 _sets.get(0).getBlock(blockIndex).setDirty(false);
-
+                return 0;
             }
         } else { //write access
-            _stats.addMiss(); //change
+            _stats.addMiss(); //SEE IF WRITTING DOING MISS
             if (_sets.get(0).getBlock(blockIndex).isDirty() && _nextLevel != null) {
                 int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
                 _nextLevel.access(newAddress, 1);
-            } else {
-                _sets.get(0).getBlock(blockIndex).setTag(tag);
-                _sets.get(0).getBlock(blockIndex).setValidate(true);
-                _sets.get(0).getBlock(blockIndex).setDirty(true);
             }
+            
+            _sets.get(0).getBlock(blockIndex).setTag(tag);
+            _sets.get(0).getBlock(blockIndex).setValidate(true);
+            _sets.get(0).getBlock(blockIndex).setDirty(true);
+
         }
-        return address;
+
+        return 0;
     }
 
     public void setAssociative(int address, int accessType) {
@@ -133,126 +155,121 @@ public class Cache {
         boolean find = false;
         int index;
         int tag;
-        tag = (address/_bSize)/_nSets;
+        tag = (address / _bSize) / _nSets;
         int set;
-        if(accessType==0) {
-            set = (address/_bSize)%_nSets;
-            for(index=0;index<_associative && !find; index++){
-                if(_sets.get(set).getBlocks().get(index).isValidate() && _sets.get(set).getBlocks().get(index).getTag()==tag){
-                    find=true;
+        if (accessType == 0) {
+            set = (address / _bSize) % _nSets;
+            for (index = 0; index < _associative && !find; index++) {
+                if (_sets.get(set).getBlocks().get(index).isValidate() && _sets.get(set).getBlocks().get(index).getTag() == tag) {
+                    find = true;
                     _stats.addHit();
                 }
             }
-            if(!find){
-                if(_nextLevel!=null){
+            if (!find) {
+                if (_nextLevel != null) {
                     _nextLevel.access(address, accessType);
                 }
-                for(index=0;index<_associative && !find; index++){
-                    if(!_sets.get(set).getBlocks().get(index).isValidate()){
-                        find=true;
+                for (index = 0; index < _associative && !find; index++) {
+                    if (!_sets.get(set).getBlocks().get(index).isValidate()) {
+                        find = true;
                     }
                 }
-                if(find) {
+                if (find) {
                     index--; // a don't know why need this. But work!
                     _sets.get(set).getBlocks().get(index).setValidate(true);
                     _sets.get(set).getBlocks().get(index).setTag(tag);
                     _sets.get(set).getBlocks().get(index).setDirty(false);
                     _stats.addMiss();
-                }
-                else {
+                } else {
                     Random random = new Random();
                     index = random.nextInt(_associative);
-                    if(_sets.get(set).getBlocks().get(index).isDirty() && _nextLevel!=null) {
+                    if (_sets.get(set).getBlocks().get(index).isDirty() && _nextLevel != null) {
                         _nextLevel.access(address, 0);
                     }
                     _sets.get(set).getBlocks().get(index).setValidate(true);
                     _sets.get(set).getBlocks().get(index).setTag(tag);
                     _sets.get(set).getBlocks().get(index).setDirty(false);
                     _stats.addMiss();
-                    
+
                 }
             }
-        }
-        else {
-            set = (address/_bSize)%_nSets;
-            for(index=0;index<_associative && !find; index++){
-                if(_sets.get(set).getBlocks().get(index).isValidate() && _sets.get(set).getBlocks().get(index).getTag()==tag){
-                    find=true;
+        } else {
+            set = (address / _bSize) % _nSets;
+            for (index = 0; index < _associative && !find; index++) {
+                if (_sets.get(set).getBlocks().get(index).isValidate() && _sets.get(set).getBlocks().get(index).getTag() == tag) {
+                    find = true;
                     _sets.get(set).getBlocks().get(index).setDirty(true);
                     _stats.addHit();
                 }
             }
-            if(!find){
-                for(index=0;!find && index<_associative ; index++){
-                    if(!_sets.get(set).getBlocks().get(index).isValidate()){
-                        find=true;
+            if (!find) {
+                for (index = 0; !find && index < _associative; index++) {
+                    if (!_sets.get(set).getBlocks().get(index).isValidate()) {
+                        find = true;
                     }
                 }
-                if(find){
+                if (find) {
                     index--; // a don't know why need this. But work!
                     _sets.get(set).getBlocks().get(index).setValidate(true);
                     _sets.get(set).getBlocks().get(index).setTag(tag);
                     _sets.get(set).getBlocks().get(index).setDirty(true);
                     _stats.addMiss();
-                }
-                else {
+                } else {
                     Random random = new Random();
                     index = random.nextInt(_associative);
-                    if(_sets.get(set).getBlocks().get(index).isDirty() && _nextLevel!=null) {
+                    if (_sets.get(set).getBlocks().get(index).isDirty() && _nextLevel != null) {
                         _nextLevel.access(address, 0);
                     }
                     _sets.get(set).getBlocks().get(index).setValidate(true);
                     _sets.get(set).getBlocks().get(index).setTag(tag);
                     _sets.get(set).getBlocks().get(index).setDirty(true);
                     _stats.addMiss();
-                    
+
                 }
             }
-                
+
         }
     }
-        
-        
-        /*
-        int addressTemp;
-        addressTemp = address / _bSize;
 
-        int associativeIndex = addressTemp % _associative;
-        int tag = (int) addressTemp / _associative;
-        boolean hasFound = false;
-        boolean hasOccupied = true;
+    /*
+     int addressTemp;
+     addressTemp = address / _bSize;
 
-        for (int i = 0; i < getnSets(); i++) {  //WTF?? Why this for???
-            if ((_sets.get(associativeIndex).getBlocks().get(i).isValidate()) && (_sets.get(associativeIndex).getBlocks().get(i).getTag() == tag)) {
-                _stats.addHit();
-                hasFound = true;
+     int associativeIndex = addressTemp % _associative;
+     int tag = (int) addressTemp / _associative;
+     boolean hasFound = false;
+     boolean hasOccupied = true;
+
+     for (int i = 0; i < getnSets(); i++) {  //WTF?? Why this for???
+     if ((_sets.get(associativeIndex).getBlocks().get(i).isValidate()) && (_sets.get(associativeIndex).getBlocks().get(i).getTag() == tag)) {
+     _stats.addHit();
+     hasFound = true;
                
-            }
-        }
+     }
+     }
 
-        if (!hasFound) {
-            _stats.addMiss();
-            for (int i = 0; i < getnSets(); i++) {
-                if (!_sets.get(associativeIndex).getBlock(i).isValidate()) {
-                    _sets.get(associativeIndex).getBlock(i).setValidate(true);
-                    _sets.get(associativeIndex).getBlock(i).setTag(tag);
-                    hasOccupied = true;
-                    break; //if find value get out a loop           
-                }
-                hasOccupied = false;
-            }
-        }
+     if (!hasFound) {
+     _stats.addMiss();
+     for (int i = 0; i < getnSets(); i++) {
+     if (!_sets.get(associativeIndex).getBlock(i).isValidate()) {
+     _sets.get(associativeIndex).getBlock(i).setValidate(true);
+     _sets.get(associativeIndex).getBlock(i).setTag(tag);
+     hasOccupied = true;
+     break; //if find value get out a loop           
+     }
+     hasOccupied = false;
+     }
+     }
 
-        if (!hasOccupied) {
+     if (!hasOccupied) {
 
-            Random random = new Random();
-            int index = random.nextInt(getnSets());
-            _sets.get(associativeIndex).getBlock(index).setValidate(true);
-            _sets.get(associativeIndex).getBlock(index).setTag(tag);
+     Random random = new Random();
+     int index = random.nextInt(getnSets());
+     _sets.get(associativeIndex).getBlock(index).setValidate(true);
+     _sets.get(associativeIndex).getBlock(index).setTag(tag);
 
-        }
-*/
-    
+     }
+     */
     // 0 is read and 1 is write
     public void fullyAssociative(int address, int accessType) {
         /**
@@ -265,9 +282,9 @@ public class Cache {
         int tag = address / getbSize();
         boolean hasFound = false;
         boolean hasOccupied = true;
-        
-        if(accessType==0){
-    //          search for address in cache
+
+        if (accessType == 0) {
+            //          search for address in cache
             for (int i = 0; i < getAssociative(); i++) {
                 if ((_sets.get(0).getBlock(i).isValidate()) && (_sets.get(0).getBlock(i).getTag() == tag)) {
                     _stats.addHit();
@@ -280,7 +297,7 @@ public class Cache {
             //place, after it set a block in a random index
             if (!hasFound) {
                 _stats.addMiss();
-                if(_nextLevel!=null){
+                if (_nextLevel != null) {
                     _nextLevel.access(address, 0);
                 }
                 for (int i = 0; i < getAssociative(); i++) {
@@ -296,15 +313,14 @@ public class Cache {
             if (!hasOccupied) {
                 Random random = new Random();
                 int index = random.nextInt(getAssociative());
-                if(_sets.get(0).getBlock(index).isDirty() && _nextLevel!=null){
+                if (_sets.get(0).getBlock(index).isDirty() && _nextLevel != null) {
                     _nextLevel.access(address, 1);
                 }
                 _sets.get(0).getBlock(index).setValidate(true);
                 _sets.get(0).getBlock(index).setTag(tag);
             }
-        }
-        else {
-           for (int i = 0; i < getAssociative(); i++) {
+        } else {
+            for (int i = 0; i < getAssociative(); i++) {
                 if ((_sets.get(0).getBlock(i).isValidate()) && (_sets.get(0).getBlock(i).getTag() == tag)) {
                     //_stats.addHit();
                     _sets.get(0).getBlock(i).setDirty(true);
@@ -312,8 +328,8 @@ public class Cache {
                     break; //if find value get out a loop
                 }
             }
-           if(!hasFound){
-               
+            if (!hasFound) {
+
                 for (int i = 0; i < getAssociative(); i++) {
                     if ((!_sets.get(0).getBlock(i).isValidate())) {
                         _sets.get(0).getBlock(i).setValidate(true);
@@ -328,13 +344,13 @@ public class Cache {
             if (!hasOccupied) {
                 Random random = new Random();
                 int index = random.nextInt(getAssociative());
-                if(_sets.get(0).getBlock(index).isDirty() && _nextLevel!=null){
+                if (_sets.get(0).getBlock(index).isDirty() && _nextLevel != null) {
                     _nextLevel.access(address, 1);
                 }
                 _sets.get(0).getBlock(index).setValidate(true);
                 _sets.get(0).getBlock(index).setTag(tag);
                 _sets.get(0).getBlock(index).setDirty(true);
-           }
+            }
         }
     }
 
