@@ -350,14 +350,14 @@ public class Cache {
 
         } else { //writting
             _stats.addMiss();
-            for (int i = 0; i < getAssociative(); i++) {
+            for (int i = 0; i < getAssociative(); i++) { //if is in cache only tag dirrty bit
                 if ((_sets.get(i).getBlock(0).isValidate()) && (_sets.get(i).getBlock(0).getTag() == tag)) {
                     _sets.get(i).getBlock(0).setDirty(true);
                     return 0;
                 }
             }
-
-                for (int i = 0; i < getAssociative(); i++) {
+            //if haven't in cache
+                for (int i = 0; i < getAssociative(); i++) { //search empty set
                     if ((!_sets.get(i).getBlock(0).isValidate())) {
                         _sets.get(i).getBlock(0).setValidate(true);
                         _sets.get(i).getBlock(0).setDirty(true);
@@ -365,6 +365,8 @@ public class Cache {
                         return 0;
                     }
                 }
+                
+                //set on random assoc
                 Random random = new Random();
                 int index = random.nextInt(getAssociative());
                 if (_sets.get(index).getBlock(0).isDirty() && _nextLevel != null) {
