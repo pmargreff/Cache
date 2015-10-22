@@ -9,10 +9,16 @@ public class ProcessorStats {
     private int _compulsory;
     private int _conflict;
     private int _access;
+    public int _written;
     
     public ProcessorStats() {
         this._hit = 0;
         this._miss = 0;
+        this._capacity = 0;
+        this._access = 0;
+        this._compulsory = 0;
+        this._conflict = 0;
+        this._written = 0;
     }
 
     public void addConflictMiss(){
@@ -39,6 +45,11 @@ public class ProcessorStats {
         this._hit++;
         this._access++;
     }
+    
+    public void  addWritten(){
+        this._written++;
+        this._access++;
+    }
 
     public int getMiss() {
         return _miss;
@@ -53,23 +64,33 @@ public class ProcessorStats {
         return _capacity;
     }
 
-    public void setCapacity(int _capacity) {
-        this._capacity = _capacity;
-    }
 
     public int getCompulsory() {
         return _compulsory;
     }
 
-    public void setCompulsory(int _compulsory) {
-        this._compulsory = _compulsory;
-    }
-
     public int getConflict() {
         return _conflict;
     }
+    
 
-    public void setConflict(int _conflict) {
-        this._conflict = _conflict;
+    public int getAccess() {
+        return _access;
     }
+
+    public int getWritten() {
+        return _written;
+    }
+    
+    public void print(){
+        System.out.println("Access number: " + getAccess());
+        System.out.println("    Hits: " + getHit());
+        System.out.println("    Written: " + getWritten());
+        System.out.println("    Misses: " + getMiss());
+        System.out.println("        Compulsory: " + getCompulsory());
+        System.out.println("        Conflict: " + getConflict());
+        System.out.println();
+    }
+
+   
 }

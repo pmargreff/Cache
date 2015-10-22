@@ -42,19 +42,19 @@ public class Processor {
         this._address = new ArrayList<>(); //Init the Adress List
         this._accessType = new ArrayList<>(); //Init the comand list (Read or Write)
 
-        nSetsL1D = 32;
-        assocL1D = 1;
+        nSetsL1D = 1;
+        assocL1D = 256;
         bSizeL1D = 4;
 
-        nSetsL1I = 32;
+        nSetsL1I = 64;
         assocL1I = 1;
         bSizeL1I = 4;
 
-        nSetsL2U = 32;
+        nSetsL2U = 1024;
         assocL2U = 1;
         bSizeL2U = 4;
 
-        this._splitAddress = 500;
+        this._splitAddress = 1000;
 
         this._cacheL2U = new Cache(nSetsL2U, assocL2U, bSizeL2U);
 
@@ -73,7 +73,7 @@ public class Processor {
 
     public static void main(String[] argv) {
         String path;
-        path = "arqTexto1_rw_10k.txt";
+        path = "IO/arqTexto1_rw_10k.txt";
 
         Processor sample = new Processor(path);
         sample.run();
@@ -88,9 +88,9 @@ public class Processor {
          System.out.println("ERROR! Argumento: Número_de_blocos<int> caminho_arquivo_entrada<String>");
          }
          */
-        System.out.println("L1 Data - Hit: " + sample._cacheL1D._stats.getHit() + " Miss: " + sample._cacheL1D._stats.getMiss());
-        System.out.println("L1 Instructions - Hit: " + sample._cacheL1I._stats.getHit() + " Miss: " + sample._cacheL1I._stats.getMiss());
-        System.out.println("L2 Unified - Hit: " + sample._cacheL2U._stats.getHit() + " Miss: " + sample._cacheL2U._stats.getMiss());
+        sample._cacheL1D._stats.print();
+        sample._cacheL1I._stats.print();
+        sample._cacheL2U._stats.print();
     }
 
     /**
