@@ -24,37 +24,14 @@ public class Processor {
 
     private int _splitAddress; //Numbers equal or less (<=) than _splitAdress will be save on data memory
 
-    public Processor(String path) {
+    public Processor(String path, int nSetsL1D, int assocL1D, int bSizeL1D, int nSetsL1I, int assocL1I, int bSizeL1I, int nSetsL2U, int assocL2U, int bSizeL2U, int split) {
         //Caches sizes
-        int assocL1D; //Blocks size in L1D
-        int nSetsL1D; //Number of blocks in L1D
-        int bSizeL1D;
 
-        int assocL1I; //Blocks size in L1I
-        int nSetsL1I; //Number of blocks in L1I
-        int bSizeL1I;
-
-        int assocL2U; //Blocks size in L1I
-        int nSetsL2U; //Number of blocks in L1I
-        int bSizeL2U;
-        
         this._path = path; //get the path
         this._address = new ArrayList<>(); //Init the Adress List
         this._accessType = new ArrayList<>(); //Init the comand list (Read or Write)
 
-        nSetsL1D = 4;
-        assocL1D = 64;
-        bSizeL1D = 1;
-
-        nSetsL1I = 4;
-        assocL1I = 64;
-        bSizeL1I = 1;
-
-        nSetsL2U = 1024;
-        assocL2U = 1;
-        bSizeL2U = 1;
-
-        this._splitAddress = 500;
+        this._splitAddress = split;
 
         this._cacheL2U = new Cache(nSetsL2U, assocL2U, bSizeL2U);
 
@@ -72,25 +49,53 @@ public class Processor {
     }
 
     public static void main(String[] argv) {
-        String path;
-        path = "IO/arqTexto1_rw_10k.txt";
 
-        Processor sample = new Processor(path);
-        sample.run();
+        String path_file;
+        int assocL1D; //Blocks size in L1D
+        int nSetsL1D; //Number of blocks in L1D
+        int bSizeL1D;
 
-        /*if ( argv.length == 2){
-         lines = Integer.parseInt(argv[0]);
-         path = argv[1];
+        int assocL1I; //Blocks size in L1I
+        int nSetsL1I; //Number of blocks in L1I
+        int bSizeL1I;
 
-         Processor sample = new Processor(lines, path);
-         sample.run();
-         } else {
-         System.out.println("ERROR! Argumento: Número_de_blocos<int> caminho_arquivo_entrada<String>");
-         }
-         */
-        sample._cacheL1D._stats.print();
-        sample._cacheL1I._stats.print();
-        sample._cacheL2U._stats.print();
+        int assocL2U; //Blocks size in L2U
+        int nSetsL2U; //Number of blocks in L2U
+        int bSizeL2U;
+
+        int splitAddress;
+
+        if (argv.length == 11) {
+            path_file = argv[0];
+            nSetsL1D = Integer.parseInt(argv[1]);
+            assocL1D = Integer.parseInt(argv[2]);
+            bSizeL1D = Integer.parseInt(argv[3]);
+
+            nSetsL1I = Integer.parseInt(argv[4]);
+            assocL1I = Integer.parseInt(argv[5]);
+            bSizeL1I = Integer.parseInt(argv[6]);
+
+            nSetsL2U = Integer.parseInt(argv[7]);
+            assocL2U = Integer.parseInt(argv[8]);
+            bSizeL2U = Integer.parseInt(argv[9]);
+            
+            splitAddress = Integer.parseInt(argv[10]);
+
+            Processor sample = new Processor(path_file, nSetsL1D, assocL1D, bSizeL1D, nSetsL1I, assocL1I, bSizeL1I, nSetsL2U, assocL2U, bSizeL2U, splitAddress);
+
+            sample.run();
+
+//        print cache stats
+            sample._cacheL1D._stats.print();
+            sample._cacheL1I._stats.print();
+            sample._cacheL2U._stats.print();
+        } else {
+            System.out.println("ERROR! Argumentos: caminhoArquivo<String> NumeroDeBlocosL1D<int> AssociativedadeL1D<int> tamanhoDoBlocoL1D<int> ");
+            System.out.print("NumeroDeBlocosL1I<int> AssociativedadeL1I<int> tamanhoDoBlocoL1I<int> ");
+            System.out.print("NumeroDeBlocosL2U<int> AssociativedadeL2U<int> tamanhoDoBlocoL2U<int> ");
+            System.out.print("SplittingAddress<int>");
+        }
+
     }
 
     /**
