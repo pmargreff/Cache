@@ -11,7 +11,7 @@ Disciplina de Arquitetura e Organizaçao de Computadores II
 
 ## Como usar
 * Compilação: `javac Processor.java`
-* Execução: `java Processor <nsetsL1D> <bsizeL1D> <assocL1D> <nsetsL1I> <bsizeL1I> <assocL1I> <nsetsL2U> <bsizeL2U>  <assocL2U> <path> <SplitAddress>`
+* Execução: `java Processor <nsetsL1I> <bsizeL1I> <assocL1I> <nsetsL1D> <bsizeL1D> <assocL1D> <nsetsL2U> <bsizeL2U>  <assocL2U> <path> <SplitAddress>`
 
 **SplitAddress** - Divisão de o que vai para a cache de dados (menor ou igual) e o que vai para a cache de instruções (maior)
 
