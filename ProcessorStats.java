@@ -82,6 +82,24 @@ public class ProcessorStats {
         return _written;
     }
     
+    private float getMissRatio(){
+        float ratio;
+        int access;
+        access = _access - _written;
+        ratio = (float) _miss / access;
+        ratio *= 100;
+        return ratio;
+    }
+    
+    private float getHitRatio(){
+        float ratio;
+        int access;
+        access = _access - _written;
+        ratio = (float) _hit / access;
+        ratio *= 100;
+        return ratio;
+    }
+    
     public void print(){
         System.out.println("Access number: " + getAccess());
         System.out.println("    Hits: " + getHit());
@@ -89,6 +107,12 @@ public class ProcessorStats {
         System.out.println("    Misses: " + getMiss());
         System.out.println("        Compulsory: " + getCompulsory());
         System.out.println("        Conflict: " + getConflict());
+        System.out.println();
+        System.out.printf("Hit Ratio: %.2f" , getHitRatio());
+        System.out.print(" %");
+        System.out.println();
+        System.out.printf("Miss Ratio: %.2f", getMissRatio());
+        System.out.print(" %");
         System.out.println();
     }
 
