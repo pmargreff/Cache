@@ -11,10 +11,18 @@ Disciplina de Arquitetura e Organizaçao de Computadores II
 
 ## Como usar
 * Compilação: `javac Processor.java`
-* Execução: `java Processor <Tamanho_da_Cache> <Caminho_do_arquivo> `
+* Execução: `java Processor <nsetsL1D> <bsizeL1D> <assocL1D> <nsetsL1I> <bsizeL1I> <assocL1I> <nsetsL2U> <bsizeL2U>  <assocL2U> <path> <SplitAddress>`
 
-**Tamanho_da_Cache** - Número de blocos da cache
+**SplitAddress** - Divisão de o que vai para a cache de dados (menor ou igual) e o que vai para a cache de instruções (maior)
 
-**Caminho_do_arquivo** - Caminho para o arquivo de entrada (*txt*)
+**Path** - Caminho para o arquivo de entrada deve ser (*txt*)
 
-* Exemplo: `java Processor 1024 IO/arqTexto1_rw_10k.txt` 
+**Exemplo:**  `java Processor 64 1 4 64 1 4 256 1 4 IO/arqTexto1_rw_10k.txt 500 ` 
+
+##Mapeamentos
+
+* Mapeamento direto - assoc = 1 e nsets > 1
+
+* Mapeamento totalmente associativo - assoc > 1 e nsets = 1
+
+* Mapeamento associativo por conjunto - assoc > 1 e nsets > 1
