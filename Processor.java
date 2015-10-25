@@ -42,19 +42,19 @@ public class Processor {
         this._address = new ArrayList<>(); //Init the Adress List
         this._accessType = new ArrayList<>(); //Init the comand list (Read or Write)
 
-        nSetsL1D = 1;
-        assocL1D = 256;
-        bSizeL1D = 4;
+        nSetsL1D = 4;
+        assocL1D = 64;
+        bSizeL1D = 1;
 
-        nSetsL1I = 64;
-        assocL1I = 1;
-        bSizeL1I = 4;
+        nSetsL1I = 4;
+        assocL1I = 64;
+        bSizeL1I = 1;
 
         nSetsL2U = 1024;
         assocL2U = 1;
-        bSizeL2U = 4;
+        bSizeL2U = 1;
 
-        this._splitAddress = 1000;
+        this._splitAddress = 500;
 
         this._cacheL2U = new Cache(nSetsL2U, assocL2U, bSizeL2U);
 

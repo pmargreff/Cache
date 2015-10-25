@@ -68,10 +68,8 @@ public class Cache {
             } else if (this._nSets == 1) {
                 return fullyAssociative(address, accessType);
             } else if (this._nSets > 1 && this._associative > 1) {
-//                setAssociative(address, accessType);
+                return setAssociative(address, accessType);
             }
-        } else {
-//            error message
         }
         return 0;
     }
@@ -155,9 +153,9 @@ public class Cache {
                 return 0;
             }
         } else { //write access
-            
+
             _stats.addWritten();
-            
+
             if (_sets.get(0).getBlock(blockIndex).isDirty() && _nextLevel != null) {
                 int newAddress = (_sets.get(0).getBlock(blockIndex).getTag() * this._bSize * this._nSets) + blockIndex; //recontruct the address
                 _nextLevel.access(newAddress, 1);
@@ -172,7 +170,7 @@ public class Cache {
         return 0;
     }
 
-    public void setAssociative(int address, int accessType) {
+    private int setAssociative(int address, int accessType) {
         /**
          * Only do a div address to bSize, if was need get and set memory data
          * is only necessary do a loop and set or get cells in a Block _bSize
@@ -181,15 +179,153 @@ public class Cache {
         int tag; //Tag on that will be on cache memory
         int blockIndex; //block line that will be changed
         int setIndex; //block collumn that will be changed
-        Block tempBlock; //new block to replacement
+        int returnNextLevel;
 
-        blockIndex = address / this._bSize; //
-        blockIndex %= this._nSets;
+        setIndex = address / this._bSize; //
+        setIndex %= this._associative;
 
         tag = address / this._bSize;
         tag /= this._nSets;
 
-//        tempBlock = _sets.get(setInddex).getBlock(blockIndex);
+        if (accessType == 0) {
+
+            //search data in cache
+            for (int i = 0; i < getnSets(); i++) {
+                if ((_sets.get(setIndex).getBlock(i).isValidate()) && (_sets.get(setIndex).getBlock(i).getTag() == tag)) { //if have
+                    _stats.addHit();
+                    if (!_sets.get(setIndex).getBlock(i).isDirty()) { //if isn't dirty
+                        return 1;
+                    } else { //if is
+                        return 2;
+                    }
+                }
+            }
+
+            if (_nextLevel != null) { //if have next cache level
+
+                Random random = new Random();
+                int index = random.nextInt(getnSets());
+
+                returnNextLevel = _nextLevel.access(address, 0);
+
+                if (returnNextLevel == 0) { //if haven't find in next level
+
+                    for (int i = 0; i < getnSets(); i++) {
+                        if ((!_sets.get(setIndex).getBlock(i).isValidate())) {
+                            _stats.addCompulsoryMiss();
+
+                            _sets.get(setIndex).getBlock(i).setValidate(true);
+                            _sets.get(setIndex).getBlock(i).setDirty(false);
+                            _sets.get(setIndex).getBlock(i).setTag(tag);
+                            return 0;
+                        }
+                    }
+
+                    if (_sets.get(setIndex).getBlock(index).isDirty()) { //if is dirty
+                        //isn't the rigth way, but a can't think how save offset
+                        int newAddress = _sets.get(setIndex).getBlock(index).getTag() * getbSize() * getAssociative();
+                        _nextLevel.access(newAddress, 1);
+                    }
+
+                    _stats.addConflictMiss();
+
+                    _sets.get(setIndex).getBlock(index).setValidate(true);
+                    _sets.get(setIndex).getBlock(index).setTag(tag);
+                    _sets.get(setIndex).getBlock(index).setDirty(false);
+
+                    return 0;
+
+                } else if (returnNextLevel == 1) { //if find in next level and isn't dirty
+
+                    if (_sets.get(setIndex).getBlock(index).isValidate()) {
+                        _stats.addConflictMiss();
+                    } else {
+                        _stats.addCompulsoryMiss();
+                    }
+
+                    _sets.get(setIndex).getBlock(index).setValidate(true);
+                    _sets.get(setIndex).getBlock(index).setDirty(false);
+                    _sets.get(setIndex).getBlock(index).setTag(tag);
+                    return 0;
+                } else if (returnNextLevel == 2) { //if find in next level and is dirty  
+
+                    if (_sets.get(setIndex).getBlock(index).isDirty()) { //if is dirty
+                        //isn't the rigth way, but a can't think how save offset
+                        int newAddress = _sets.get(setIndex).getBlock(index).getTag() * getbSize() * getAssociative();
+                        _nextLevel.access(newAddress, 1);
+                    }
+
+                    if (_sets.get(setIndex).getBlock(index).isValidate()) {
+                        _stats.addConflictMiss();
+                    } else {
+                        _stats.addCompulsoryMiss();
+                    }
+
+                    _sets.get(setIndex).getBlock(index).setValidate(true);
+                    _sets.get(setIndex).getBlock(index).setDirty(false);
+                    _sets.get(setIndex).getBlock(index).setTag(tag);
+                    return 0;
+                }
+            } else { // if is in last cache level
+                Random random = new Random();
+                int index = random.nextInt(getnSets());
+
+                for (int i = 0; i < getnSets(); i++) {
+                    if ((!_sets.get(setIndex).getBlock(i).isValidate())) {
+                        _stats.addCompulsoryMiss();
+
+                        _sets.get(setIndex).getBlock(i).setValidate(true);
+                        _sets.get(setIndex).getBlock(i).setDirty(false);
+                        _sets.get(setIndex).getBlock(i).setTag(tag);
+                        return 0;
+                    }
+                }
+
+                _stats.addConflictMiss();
+
+                _sets.get(setIndex).getBlock(index).setValidate(true);
+                _sets.get(setIndex).getBlock(index).setDirty(false);
+                _sets.get(setIndex).getBlock(index).setTag(tag);
+
+                return 0;
+
+            }
+        } else {//writte
+            _stats.addWritten();
+
+            for (int i = 0; i < getnSets(); i++) { //if is in cache only tag dirty bit
+                if ((_sets.get(setIndex).getBlock(i).isValidate()) && (_sets.get(setIndex).getBlock(i).getTag() == tag)) {
+                    _sets.get(setIndex).getBlock(i).setDirty(true);
+                    return 0;
+                }
+            }
+            //if haven't in cache
+
+            for (int i = 0; i < getnSets(); i++) { //search empty set
+                if ((!_sets.get(setIndex).getBlock(i).isValidate())) {
+                    _sets.get(setIndex).getBlock(i).setValidate(true);
+                    _sets.get(setIndex).getBlock(i).setDirty(true);
+                    _sets.get(setIndex).getBlock(i).setTag(tag);
+                    return 0;
+                }
+            }
+
+            //set on random block
+            Random random = new Random();
+            int index = random.nextInt(getnSets());
+            if (_sets.get(setIndex).getBlock(index).isDirty() && _nextLevel != null) {
+                //isn't the rigth way, but a can't think how save offset
+                int newAddress = _sets.get(setIndex).getBlock(index).getTag() * getbSize() * getAssociative();
+                _nextLevel.access(newAddress, 1);
+            }
+            _sets.get(setIndex).getBlock(index).setValidate(true);
+            _sets.get(setIndex).getBlock(index).setTag(tag);
+            _sets.get(setIndex).getBlock(index).setDirty(true);
+
+            return 0;
+
+        }
+        return -1;
     }
 
     private int fullyAssociative(int address, int accessType) {
@@ -199,8 +335,7 @@ public class Cache {
          * times
          */
         int tag = address / getbSize();
-
-        int returnNextLevel = 0;
+        int returnNextLevel;
         if (accessType == 0) { //read cache
 
             for (int i = 0; i < getAssociative(); i++) {
@@ -234,19 +369,14 @@ public class Cache {
                     }
 
                     if (_sets.get(index).getBlock(0).isDirty()) { //if is dirty
-                        _nextLevel.access(address, 1);
-                        _sets.get(index).getBlock(0).setDirty(true);
-                    } else { //if isn't
-                        _sets.get(index).getBlock(0).setDirty(false);
+                        int newAddress = (_sets.get(index).getBlock(0).getTag() * getbSize()); //reconstruct the dirty address
+                        _nextLevel.access(newAddress, 1);
                     }
 
-                    if (_sets.get(index).getBlock(0).isValidate()) {
-                        _stats.addConflictMiss();
-                    } else {
-                        _stats.addCompulsoryMiss();
-                    }
+                    _stats.addConflictMiss();
 
                     _sets.get(index).getBlock(0).setValidate(true);
+                    _sets.get(index).getBlock(0).setDirty(false);
                     _sets.get(index).getBlock(0).setTag(tag);
                     return 0;
 
@@ -257,13 +387,19 @@ public class Cache {
                     } else {
                         _stats.addCompulsoryMiss();
                     }
-                    
+
                     _sets.get(index).getBlock(0).setValidate(true);
                     _sets.get(index).getBlock(0).setDirty(false);
                     _sets.get(index).getBlock(0).setTag(tag);
                     return 0;
                 } else if (returnNextLevel == 2) { //if find in next level and is    
 
+                    if (_sets.get(index).getBlock(0).isDirty()) { //if is dirty
+                        //isn't the rigth way but is how we can do without offset
+                        int newAddress = (_sets.get(index).getBlock(0).getTag() * getbSize()); //reconstruct the dirty address
+                        _nextLevel.access(newAddress, 1);
+                    }
+                    
                     if (_sets.get(index).getBlock(0).isValidate()) {
                         _stats.addConflictMiss();
                     } else {
@@ -271,7 +407,7 @@ public class Cache {
                     }
 
                     _sets.get(index).getBlock(0).setValidate(true);
-                    _sets.get(index).getBlock(0).setDirty(true);
+                    _sets.get(index).getBlock(0).setDirty(false);
                     _sets.get(index).getBlock(0).setTag(tag);
                     return 0;
                 }
@@ -291,9 +427,10 @@ public class Cache {
                 return 0;
             }
 
-        } else { //writting
+        } else { //writte
             _stats.addWritten();
-            for (int i = 0; i < getAssociative(); i++) { //if is in cache only tag dirrty bit
+
+            for (int i = 0; i < getAssociative(); i++) { //if is in cache only tag dirty bit
                 if ((_sets.get(i).getBlock(0).isValidate()) && (_sets.get(i).getBlock(0).getTag() == tag)) {
                     _sets.get(i).getBlock(0).setDirty(true);
                     return 0;
@@ -313,7 +450,8 @@ public class Cache {
             Random random = new Random();
             int index = random.nextInt(getAssociative());
             if (_sets.get(index).getBlock(0).isDirty() && _nextLevel != null) {
-                _nextLevel.access(address, 1);
+                int newAddress = (_sets.get(index).getBlock(0).getTag() * getbSize()); //reconstruct the dirty address
+                _nextLevel.access(newAddress, 1);
             }
             _sets.get(index).getBlock(0).setValidate(true);
             _sets.get(index).getBlock(0).setTag(tag);
