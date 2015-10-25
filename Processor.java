@@ -24,7 +24,7 @@ public class Processor {
 
     private int _splitAddress; //Numbers equal or less (<=) than _splitAdress will be save on data memory
 
-    public Processor(String path, int nSetsL1D, int assocL1D, int bSizeL1D, int nSetsL1I, int assocL1I, int bSizeL1I, int nSetsL2U, int assocL2U, int bSizeL2U, int split) {
+    public Processor(int nSetsL1D, int assocL1D, int bSizeL1D, int nSetsL1I, int assocL1I, int bSizeL1I, int nSetsL2U, int assocL2U, int bSizeL2U, String path,int split) {
         //Caches sizes
 
         this._path = path; //get the path
@@ -66,34 +66,39 @@ public class Processor {
         int splitAddress;
 
         if (argv.length == 11) {
-            path_file = argv[0];
-            nSetsL1D = Integer.parseInt(argv[1]);
-            assocL1D = Integer.parseInt(argv[2]);
-            bSizeL1D = Integer.parseInt(argv[3]);
 
-            nSetsL1I = Integer.parseInt(argv[4]);
-            assocL1I = Integer.parseInt(argv[5]);
-            bSizeL1I = Integer.parseInt(argv[6]);
-
-            nSetsL2U = Integer.parseInt(argv[7]);
-            assocL2U = Integer.parseInt(argv[8]);
-            bSizeL2U = Integer.parseInt(argv[9]);
+            nSetsL1I = Integer.parseInt(argv[0]);
+            assocL1I = Integer.parseInt(argv[1]);
+            bSizeL1I = Integer.parseInt(argv[2]);
             
+            nSetsL1D = Integer.parseInt(argv[3]);
+            assocL1D = Integer.parseInt(argv[4]);
+            bSizeL1D = Integer.parseInt(argv[5]);
+
+            nSetsL2U = Integer.parseInt(argv[6]);
+            assocL2U = Integer.parseInt(argv[7]);
+            bSizeL2U = Integer.parseInt(argv[8]);
+            
+            path_file = argv[9];
+
             splitAddress = Integer.parseInt(argv[10]);
 
-            Processor sample = new Processor(path_file, nSetsL1D, assocL1D, bSizeL1D, nSetsL1I, assocL1I, bSizeL1I, nSetsL2U, assocL2U, bSizeL2U, splitAddress);
+            Processor sample = new Processor(nSetsL1D, assocL1D, bSizeL1D, nSetsL1I, assocL1I, bSizeL1I, nSetsL2U, assocL2U, bSizeL2U, path_file, splitAddress);
 
             sample.run();
 
-//        print cache stats
-            sample._cacheL1D._stats.print();
+    //        print cache stats
+            System.out.println("L1 - I: ");
             sample._cacheL1I._stats.print();
+            System.out.println("L1 - D: ");
+            sample._cacheL1D._stats.print();
+            System.out.println("L2: ");
             sample._cacheL2U._stats.print();
         } else {
-            System.out.println("ERROR! Argumentos: caminhoArquivo<String> NumeroDeBlocosL1D<int> AssociativedadeL1D<int> tamanhoDoBlocoL1D<int> ");
-            System.out.print("NumeroDeBlocosL1I<int> AssociativedadeL1I<int> tamanhoDoBlocoL1I<int> ");
-            System.out.print("NumeroDeBlocosL2U<int> AssociativedadeL2U<int> tamanhoDoBlocoL2U<int> ");
-            System.out.print("SplittingAddress<int>");
+            System.out.print("ERROR! Arguments:  <nsets_L1i> <bsize_L1i> <assoc_L1i> ");
+            System.out.print("<nsets_L1d> <bsize_L1d> <assoc_L1d> ");
+            System.out.print("<nsets_L2> <bsize_L2> <assoc_L2> ");
+            System.out.print("SplittingAddress<int> path<String> ");
         }
 
     }
